@@ -1,0 +1,14 @@
+// this is a comment
+(( )){} // grouping stuff
+!*+-/=<> <= == // operators
+var kakka = "pyly"
+var hanuri = "kikkeli"
+
+var pylly = 3123.222
+/*
+multiline comment 
+alkdsasdj
+var HELLO = "kak"
+*/
+
+var moi = 1111
