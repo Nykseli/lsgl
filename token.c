@@ -26,6 +26,7 @@ Token normalToken(TokenType type, char* lexeme, char* literal, int line){
     }
 
     token.line = line;
+    token.type = type;
 
     return token;
 }
@@ -139,7 +140,7 @@ char* number(char* code, int* current){
     char* numString = NULL;
     int len = 0;
     int start = (*current) - 1;
-    while(isDigit(code[*current])){
+    while(isDigit(code[(*current) - 1])){
         (*current)++;
         len++;
     }
