@@ -17,6 +17,7 @@ static Expr* multiplication(ParsedTokens* PT);
 static Expr* unary(ParsedTokens* PT);
 static Expr* primary(ParsedTokens* PT);
 static Expr* grouping(ParsedTokens* PT);
+static Expr* expression(ParsedTokens* PT);
 static Token previous(ParsedTokens* PT);
 
 static int match(ParsedTokens* PT, TokenType type, TokenType types[], int typeLen);
