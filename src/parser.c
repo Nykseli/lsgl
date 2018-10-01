@@ -59,8 +59,15 @@ UnaryExpr* newUnary(Token op, Expr* right){
 }
 
 LiteralExpr* newLiteral(LiteralType type, void* value){
+   
     LiteralExpr* lExpr = malloc(sizeof(LiteralExpr));
-    lExpr->value = value;
+    if(type == LITERAL_NUMBER){
+        double* doubleLiteral = (double*)malloc(sizeof(double));
+        *doubleLiteral = atof(value);
+        lExpr->value = doubleLiteral;    
+    }else{
+        lExpr->value = value;
+    }
     lExpr->type = type;
 
     return lExpr;
@@ -181,9 +188,9 @@ Expr* primary(ParsedTokens* PT){
     if(match(PT, token.type, types, 1)){
         return newExpr(EXPR_LITERAL, newLiteral(LITERAL_BOOL, "true"));
     }
-    types[0] = NIL;
+    types[0] = NULL_L;
     if(match(PT, token.type, types, 1)){
-        return newExpr(EXPR_LITERAL, newLiteral(LITERAL_NIL, "nil"));
+        return newExpr(EXPR_LITERAL, newLiteral(LITERAL_NULL, "null"));
     }
     types[0] = STRING;
     if(match(PT, token.type, types, 1)){

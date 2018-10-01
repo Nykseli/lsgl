@@ -18,7 +18,7 @@ typedef enum expr_type {
 } ExpressionType;
 
 typedef enum literal_expr_type {
-    LITERAL_NIL,
+    LITERAL_NULL,
     LITERAL_BOOL,
     LITERAL_NUMBER,
     LITERAL_STRING

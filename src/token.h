@@ -35,7 +35,7 @@ typedef enum tokentype {
     FUN,
     FOR,
     IF,
-    NIL,
+    NULL_L,
     OR,
     PRINT,
     RETURN,
@@ -86,7 +86,7 @@ Tokenizer tokenizer(CodeInfo* fi);
 #define FUN_KEY "fun"
 #define FOR_KEY "for"
 #define IF_KEY "if"
-#define NIL_KEY "nil"
+#define NULL_KEY "null"
 #define OR_KEY "or"
 #define PRINT_KEY "print"
 #define RETURN_KEY "return"

@@ -5,6 +5,7 @@
 #include "token.h"
 #include "parser.h"
 #include "visitor.h"
+#include "interpreter.h"
 #include "astPrinter.h"
 
 void runPrompt();
@@ -52,21 +53,21 @@ void runFile(char* filePath){
     printf("%s", codeInfo->chars);
     Tokenizer tokenzr = tokenizer(codeInfo);
 
-    for(int i = 0;  i< tokenzr.tokensLen; i++){
-        printf("lexeme: %s %d\n", tokenzr.tokens[i].lexeme, tokenzr.tokens[i].line);
-        printf("type: %d\n", (int)tokenzr.tokens[i].type);
-        if(tokenzr.tokens[i].literal != NULL){
-        printf("lexeme lit: %s\n", tokenzr.tokens[i].literal);
-        printf("lexeme lit len: %d\n", strlen(tokenzr.tokens[i].literal));
-        }
-    }
+    // for(int i = 0;  i< tokenzr.tokensLen; i++){
+    //     printf("lexeme: %s %d\n", tokenzr.tokens[i].lexeme, tokenzr.tokens[i].line);
+    //     printf("type: %d\n", (int)tokenzr.tokens[i].type);
+    //     if(tokenzr.tokens[i].literal != NULL){
+    //     printf("lexeme lit: %s\n", tokenzr.tokens[i].literal);
+    //     printf("lexeme lit len: %d\n", strlen(tokenzr.tokens[i].literal));
+    //     }
+    // }
     Expr* tokz = parseTokens(tokenzr);
 
     if(tokz != NULL){
-        printAst(tokz);
+        // printAst(tokz);
         BinaryExpr* expr = (BinaryExpr*) tokz->expr;
-        Expr* kaki = expr->left;
-        printAst(kaki);
+        
+        interpret(tokz);
     }
 
 }

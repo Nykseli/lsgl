@@ -52,8 +52,8 @@ Token idToken(char* lexeme, char* literal, int line){
         type = FOR;
     } else if (strcmp(literal, IF_KEY) == 0) {
         type = IF;
-    } else if (strcmp(literal, NIL_KEY) == 0) {
-        type = NIL;
+    } else if (strcmp(literal, NULL_KEY) == 0) {
+        type = NULL_L;
     } else if (strcmp(literal, OR_KEY) == 0) {
         type = OR;
     } else if (strcmp(literal, PRINT_KEY) == 0) {
