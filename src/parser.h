@@ -11,7 +11,7 @@ typedef struct parsedTokens {
 
 
 
-Expr* parseTokens(Tokenizer tokenizer);
+ParsedStmt parseTokens(Tokenizer tokenizer);
 
 #define MATCH(x, type) ((x) == type)
 

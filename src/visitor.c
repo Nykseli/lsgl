@@ -10,6 +10,18 @@ void* acceptExpr(ExpressionVisitor visitor, Expr* expr){
             return visitor.visitBinary(expr->expr);
         case EXPR_GROUPING:
             return visitor.visitGrouping(expr->expr);
+        case EXPR_VARIABLE:
+            return visitor.visitVar(expr->expr);
     }
 }
 
+void* acceptStmt(StatementVisitor visitor, Stmt* stmt){
+    switch(stmt->type){
+        case STMT_EXPR:
+            return visitor.visitExpression(stmt);
+        case STMT_PRINT:
+            return visitor.visitPrint(stmt);
+        case STMT_VAR:
+            return visitor.visitVar(stmt);
+    }
+}

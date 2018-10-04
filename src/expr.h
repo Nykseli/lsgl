@@ -54,9 +54,25 @@ typedef struct unary {
     Expr* right;
 } UnaryExpr;
 
+typedef struct variable {
+    Token name;
+}VarExpr;
 
+typedef enum stmt_type {
+    STMT_EXPR,
+    STMT_PRINT,
+    STMT_VAR
+} StmtType;
 
+typedef struct stmt {
+    StmtType type;
+    Token name;
+    Expr* expr;
+} Stmt;
 
-
+typedef struct stmt_parsed {
+    Stmt* stmt;
+    int stmtLen;
+} ParsedStmt;
 
 #endif

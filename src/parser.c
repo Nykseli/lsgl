@@ -18,7 +18,18 @@ static Expr* unary(ParsedTokens* PT);
 static Expr* primary(ParsedTokens* PT);
 static Expr* grouping(ParsedTokens* PT);
 static Expr* expression(ParsedTokens* PT);
+static Expr* variable(ParsedTokens* PT);
 static Token previous(ParsedTokens* PT);
+
+static Stmt expressionStatement(ParsedTokens* PT);
+static Stmt printStatement(ParsedTokens* PT);
+static Stmt varStatement(Expr* initializer, Token name);
+static Stmt statement(ParsedTokens* PT);
+static Stmt varDeclaration(ParsedTokens* PT);
+static Stmt declaration(ParsedTokens* PT);
+
+static void error(ParsedTokens* PT, const char* msg);
+static Token consume(ParsedTokens* PT, TokenType type, const char* msg);
 
 static int match(ParsedTokens* PT, TokenType type, TokenType types[], int typeLen);
 
@@ -30,6 +41,26 @@ int match(ParsedTokens* PT, TokenType type, TokenType types[], int typeLen){
         }
     }
     return 0;
+}
+
+static void error(ParsedTokens* PT, const char* msg){
+    Token token = PT->tokens[PT->current];
+    if (token.type == EOF) {
+        except("Syntax Error at end of file: %s\n", msg);
+    } else {
+        except("Syntax Error (Line %d): %s '%s'\n", token.line, msg, token.lexeme);
+    }
+}
+
+static Token consume(ParsedTokens* PT, TokenType type, const char* msg){
+    Token token = PT->tokens[PT->current];
+    if (MATCH(token.type, type)) {
+        PT->current++;
+        return token;
+    }
+    token.lexeme = NULL;
+    error(PT, msg);
+    return token;
 }
 
 Token previous(ParsedTokens* PT){
@@ -78,6 +109,13 @@ GroupingExpr* newGrouping(Expr* expr){
     gExpr->expr = expr;
     
     return gExpr;
+}
+
+VarExpr* newVariable(Token value){
+    VarExpr* varExpr = malloc(sizeof(VarExpr));
+    varExpr->name = value;
+
+    return varExpr;
 }
 
 Expr* equality(ParsedTokens* PT){
@@ -200,13 +238,17 @@ Expr* primary(ParsedTokens* PT){
     if(match(PT, token.type, types, 1)){
         return newExpr(EXPR_LITERAL, newLiteral(LITERAL_NUMBER, previous(PT).literal));
     }
+    types[0] = IDENTIFIER;
+    if(match(PT, token.type, types, 1)){
+        return newExpr(EXPR_VARIABLE, newVariable(previous(PT))); 
+    } 
 
     types[0] = LEFT_PAREN;
     if(match(PT, token.type, types, 1)){
         Expr* expr = expression(PT);
         // TODO consume(); parenthsis error handling
         return newExpr(EXPR_GROUPING, newGrouping(expr));
-    }
+    }   
     return NULL;
 
 }
@@ -217,14 +259,79 @@ Expr* expression(ParsedTokens* PT){
 
 
 
-Expr* parseTokens(Tokenizer tokenizer){
+Stmt printStatement(ParsedTokens* PT){
+    Stmt stmt;
+    stmt.type = STMT_PRINT;
+    stmt.expr = expression(PT);
+    consume(PT, SEMICOLON, "Expect ';' after value.");
+    return stmt;
+}
+
+Stmt expressionStatement(ParsedTokens* PT){
+    Stmt stmt;
+    stmt.type = STMT_EXPR;
+    stmt.expr = expression(PT);
+    consume(PT, SEMICOLON, "Expect ';' after value.");
+    return stmt;
+}
+
+Stmt varStatement(Expr* initializer, Token name){
+    Stmt stmt;
+    stmt.type = STMT_VAR;
+    stmt.expr = initializer;
+    stmt.name = name;
+    return stmt;
+}
+
+Stmt statement(ParsedTokens* PT) {
+    Token token = PT->tokens[PT->current];
+    if(MATCH(token.type, PRINT)){
+        PT->current++;
+        return printStatement(PT);
+    }
+
+    return expressionStatement(PT);
+}
+
+Stmt varDeclaration(ParsedTokens* PT) {
+    Token name = consume(PT, IDENTIFIER, "Expected variable name.");
+    
+    Expr* initializer = NULL;
+    TokenType types[] = { EQUAL };
+    if(match(PT, PT->tokens[PT->current].type, types, 1)){
+        initializer = expression(PT);
+    }
+
+    consume(PT, SEMICOLON, "Expect ';' after variable declaration.");
+    
+    return varStatement(initializer, name);
+}
+
+Stmt declaration(ParsedTokens* PT) {
+    Token token = PT->tokens[PT->current];
+    if(MATCH(token.type, VAR)){
+        PT->current++;
+        return varDeclaration(PT);
+    }
+    return statement(PT);
+}
+
+ParsedStmt parseTokens(Tokenizer tokenizer){
+    ParsedStmt PS;
+    PS.stmtLen = 0;
+    PS.stmt = NULL;
+
     ParsedTokens* PT = malloc(sizeof(ParsedTokens));
     PT->current = 0;
     PT->tokensSize = tokenizer.tokensLen;
     PT->tokens = tokenizer.tokens;
 
-    return expression(PT);
+    while(PT->current < tokenizer.tokensLen){
+        PS.stmt = realloc(PS.stmt, sizeof(Stmt) * (PS.stmtLen + 1));
+        PS.stmt[PS.stmtLen] = declaration(PT);
+        PS.stmtLen++;
+    }
 
-
+    return PS;
 
 }

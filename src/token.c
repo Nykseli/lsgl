@@ -139,8 +139,9 @@ char* identifier(char* code, int* current){
 char* number(char* code, int* current){
     char* numString = NULL;
     int len = 0;
-    int start = (*current) - 1;
-    while(isDigit(code[(*current) - 1])){
+    --(*current);
+    int start = (*current);
+    while(isDigit(code[(*current)])){
         (*current)++;
         len++;
     }

@@ -61,13 +61,12 @@ void runFile(char* filePath){
     //     printf("lexeme lit len: %d\n", strlen(tokenzr.tokens[i].literal));
     //     }
     // }
-    Expr* tokz = parseTokens(tokenzr);
+    ParsedStmt stmts = parseTokens(tokenzr);
 
-    if(tokz != NULL){
+    if(stmts.stmt != NULL){
         // printAst(tokz);
-        BinaryExpr* expr = (BinaryExpr*) tokz->expr;
         
-        interpret(tokz);
+        interpret(stmts);
     }
 
 }
