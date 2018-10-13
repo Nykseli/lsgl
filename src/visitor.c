@@ -12,6 +12,8 @@ void* acceptExpr(ExpressionVisitor visitor, Expr* expr){
             return visitor.visitGrouping(expr->expr);
         case EXPR_VARIABLE:
             return visitor.visitVar(expr->expr);
+        case EXPR_ASSIGNMENT:
+            return visitor.visitAssign(expr->expr);
     }
 }
 

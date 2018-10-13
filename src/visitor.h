@@ -10,6 +10,7 @@ typedef struct expression_visitor {
     ActionExpr visitLiteral;
     ActionExpr visitGrouping;
     ActionExpr visitVar;
+    ActionExpr visitAssign;
 } ExpressionVisitor;
 
 void* acceptExpr(ExpressionVisitor visitor, Expr* expr);

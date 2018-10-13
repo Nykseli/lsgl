@@ -5,12 +5,14 @@
 #include "expr.h"
 #include "dict.h"
 #include "visitor.h"
+#include "uthash.h"
 
 static void* visitLiteralExpr(void* expr);
 static void* visitGroupingExpr(void* expr);
 static void* visitUnaryExpr(void* expr);
 static void* visitBinaryExpr(void* expr);
 static void* visitVarExpr(void* expr);
+static void* visitAssignExpr(void* stmt);
 
 static char* isTruthy(LiteralExpr* expr);
 
@@ -23,12 +25,18 @@ static void* evaluate(Expr* expr);
 
 static Dictionary* enviromentDict;
 
+
+
+static EnvDict* envDict = NULL;
+
+
 ExpressionVisitor EvalExpressionVisitor = {
     .visitLiteral = visitLiteralExpr,
     .visitGrouping = visitGroupingExpr,
     .visitUnary = visitUnaryExpr,
     .visitBinary = visitBinaryExpr,
-    .visitVar = visitVarExpr
+    .visitVar = visitVarExpr,
+    .visitAssign = visitAssignExpr
 };
 
 StatementVisitor EvalStatmentVisitor = {
@@ -62,6 +70,7 @@ static int isEqual(LiteralExpr* left, LiteralExpr* right){
 }
 
 static void* evaluate(Expr* expr){
+    //printf("eval type: %d\n", expr->type);
     return acceptExpr(EvalExpressionVisitor, expr);
 }
 
@@ -200,7 +209,24 @@ static void* visitBinaryExpr(void* expr){
 
 static void* visitVarExpr(void* expr){
     VarExpr* vExpr = (VarExpr*) expr;
-    return dictGet(enviromentDict, vExpr->name.lexeme);
+    LiteralExpr* lExpr = (LiteralExpr*)dictGet(&envDict, vExpr->name.lexeme);
+    if(lExpr == NULL){
+        printf("lExpr from dict is NULL\n");
+    }
+     return lExpr;
+}
+
+static void* visitAssignExpr(void* expr){
+    AssignExpr* aExpr = (AssignExpr*) expr;
+    LiteralExpr* lExpr = (LiteralExpr*)evaluate(aExpr->value);
+    // VarExpr* vExpr = malloc(sizeof(VarExpr));
+    // vExpr->name = aExpr->name;
+    
+    if(dictSet(&envDict, aExpr->name.lexeme, lExpr) == 1){
+        return lExpr;
+    }
+    
+    return NULL;
 }
 
 static void* visitExpressionStmt(Stmt* stmt){
@@ -211,11 +237,13 @@ static void* visitExpressionStmt(Stmt* stmt){
 static void* visitPrintStmt(Stmt* stmt){
     
     LiteralExpr* lExpr = (LiteralExpr*)evaluate(stmt->expr);
+    if(lExpr == NULL)
     
     if(lExpr->type == NULL) return NULL;
 
     if(lExpr->type == LITERAL_STRING){
-        printf("Interpret string: %s\n", (char*) lExpr->value);
+        //printf("Interpret string: %s\n", (char*) lExpr->value);
+        printf("%s\n", (char*) lExpr->value);
     }else if(lExpr->type == LITERAL_NUMBER){
         printf("Interpret double: %f\n", *((double*) lExpr->value));
     }else if(lExpr->type == LITERAL_BOOL){
@@ -226,7 +254,7 @@ static void* visitPrintStmt(Stmt* stmt){
 static void* visitVarStmt(Stmt* stmt){
     LiteralExpr* lExpr = (LiteralExpr*)evaluate(stmt->expr);
     
-    dictAdd(enviromentDict, stmt->name.lexeme, lExpr);
+    dictAdd(&envDict, stmt->name.lexeme, lExpr);
     
 }
 

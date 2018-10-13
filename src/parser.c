@@ -19,6 +19,7 @@ static Expr* primary(ParsedTokens* PT);
 static Expr* grouping(ParsedTokens* PT);
 static Expr* expression(ParsedTokens* PT);
 static Expr* variable(ParsedTokens* PT);
+static Expr* assignment(ParsedTokens* PT);
 static Token previous(ParsedTokens* PT);
 
 static Stmt expressionStatement(ParsedTokens* PT);
@@ -116,6 +117,13 @@ VarExpr* newVariable(Token value){
     varExpr->name = value;
 
     return varExpr;
+}
+
+AssignExpr* newAssign(Token name, Expr* value){
+    AssignExpr* aExpr = malloc(sizeof(AssignExpr));
+    aExpr->name = name;
+    aExpr->value = value;
+    return aExpr;
 }
 
 Expr* equality(ParsedTokens* PT){
@@ -253,8 +261,26 @@ Expr* primary(ParsedTokens* PT){
 
 }
 
+Expr* assignment(ParsedTokens* PT){
+    Expr* eExpr = equality(PT);
+
+    Token types[] = { EQUAL }; 
+    if(match(PT, PT->tokens[PT->current].type, types, 1)){
+        Token equal = previous(PT);
+        Expr* value = assignment(PT);
+
+        if(eExpr->type == EXPR_VARIABLE){
+            VarExpr* varExpr = eExpr->expr;
+            Token name = varExpr->name;
+            return newExpr(EXPR_ASSIGNMENT, newAssign(name, value));
+        }
+        error(PT, "Invalid assignment target.");
+    }
+    return eExpr;
+}
+
 Expr* expression(ParsedTokens* PT){
-    return equality(PT);
+    return assignment(PT);
 }
 
 

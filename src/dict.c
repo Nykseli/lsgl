@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "dict.h"
+#include "uthash.h"
 
 static unsigned int hashCode(const char* key);
 static KeyValuePair* dictGetBucket(Dictionary* dict, const char* key);
@@ -14,33 +15,48 @@ Dictionary* dict()
     return dict;
 }
 
-int dictAdd(Dictionary* dict, const char* key, void* value)
-{
-    KeyValuePair *pair = NULL, *bucket = NULL;
-    int hash = 0;
-    if (dict != NULL) {
-        if (!dictContains(dict, key)) {
-            pair = (KeyValuePair*)malloc(sizeof(KeyValuePair));
-            pair->key = key;
-            pair->value = value;
-            pair->next = NULL;
-            hash = hashCode(key);
-            bucket = dict->buckets[hash];
-            if (bucket == NULL) {
-                dict->buckets[hash] = pair;
-            } else {
-                pair->next = dict->buckets[hash];
-                dict->buckets[hash] = pair;
-            }
-            dict->count++;
-            return 1;
-        }
+// int dictAdd(Dictionary* dict, const char* key, void* value)
+// {
+//     KeyValuePair *pair = NULL, *bucket = NULL;
+//     int hash = 0;
+//     if (dict != NULL) {
+//         if (!dictContains(dict, key)) {
+//             pair = (KeyValuePair*)malloc(sizeof(KeyValuePair));
+//             pair->key = key;
+//             pair->value = value;
+//             pair->next = NULL;
+//             hash = hashCode(key);
+//             bucket = dict->buckets[hash];
+//             if (bucket == NULL) {
+//                 dict->buckets[hash] = pair;
+//             } else {
+//                 pair->next = dict->buckets[hash];
+//                 dict->buckets[hash] = pair;
+//             }
+//             dict->count++;
+//             return 1;
+//         }
+//     }
+//     return 0;
+// }
+
+int dictAdd(struct EnvDict** dict, const char* key, void* value){
+    struct EnvDict* d = NULL;
+    if(dict)
+        HASH_FIND_STR(*dict, key, d);
+    if(d == NULL){
+        d = (struct EnvDict*)malloc(sizeof(struct EnvDict));
+        d->key = key;
+        d->value = value;
+        HASH_ADD_KEYPTR(hh, *dict, d->key, strlen(d->key), d);
+        // HASH_ADD_STR(*dict, key, d);
+        return 1;
     }
+    
     return 0;
 }
 
-int dictRemove(Dictionary* dict, const char* key)
-{
+int dictRemove(Dictionary* dict, const char* key){
     KeyValuePair *bucket = NULL, *prevBucket = NULL;
     int hash = hashCode(key);
     if (dict == NULL) {
@@ -103,22 +119,31 @@ static KeyValuePair* dictGetBucket(Dictionary* dict, const char* key)
     return NULL;
 }
 
-void* dictGet(Dictionary* dict, const char* key)
+void* dictGet(struct EnvDict** dict, const char* key)
 {
-    KeyValuePair* bucket = dictGetBucket(dict, key);
+    struct EnvDict* bucket;
+    HASH_FIND_STR(*dict, key, bucket);
+    
+    if(bucket == NULL){
+        printf("Bucket is NULL\n");
+    }
     return bucket != NULL ? bucket->value : NULL;
 }
 
-int dictSet(Dictionary* dict, const char* key, void* value)
+int dictSet(struct EnvDict** dict, const char* key, void* value)
 {
-    KeyValuePair* pair = NULL;
-    if (dict != NULL) {
-        pair = dictGet(dict, key);
-        if (pair != NULL) {
-            pair->value = value;
-            return 1;
-        }
+    struct EnvDict* d;
+    struct EnvDict* out;
+    HASH_FIND_STR(*dict, key, d);
+    if(d != NULL){
+        d = (struct EnvDict*)malloc(sizeof(EnvDict));
+        d->key = key;
+        d->value = value;
+        HASH_REPLACE_STR(*dict, key, d, out);
+        return 1;
     }
+    // memcpy(d->value, value, sizeof(value));
+        printf("dictSet fail\n");
     return 0;
 }
 

@@ -58,6 +58,11 @@ typedef struct variable {
     Token name;
 }VarExpr;
 
+typedef struct assignment {
+    Token name;
+    Expr* value;
+}AssignExpr;
+
 typedef enum stmt_type {
     STMT_EXPR,
     STMT_PRINT,

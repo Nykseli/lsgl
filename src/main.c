@@ -50,7 +50,7 @@ char* readLine(const char* prompt){
 
 void runFile(char* filePath){
     CodeInfo* codeInfo = readFile(filePath);
-    printf("%s", codeInfo->chars);
+    //printf("%s", codeInfo->chars);
     Tokenizer tokenzr = tokenizer(codeInfo);
 
     // for(int i = 0;  i< tokenzr.tokensLen; i++){
