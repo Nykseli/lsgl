@@ -1,5 +1,5 @@
-#ifndef _LOX_LIST_H_
-#define _LOX_LIST_H_
+#ifndef _LSGL_LIST_H_
+#define _LSGL_LIST_H_
 
 typedef struct node {
     void* data;

@@ -1,5 +1,5 @@
-#ifndef _LOX_FILEIO_H_
-#define _LOX_FILEIO_H_
+#ifndef _LSGL_FILEIO_H_
+#define _LSGL_FILEIO_H_
 #define _GNU_SOURCE
 
 

@@ -1,5 +1,5 @@
-#ifndef _LOX_DICT_H_
-#define _LOX_DICT_H_
+#ifndef _LSGL_DICT_H_
+#define _LSGL_DICT_H_
 
 #define DICT_INITIAL_CAPACITY 16
 #include "uthash.h"

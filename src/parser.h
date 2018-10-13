@@ -1,5 +1,5 @@
-#ifndef _LOX_PARSER_H_
-#define _LOX_PARSER_H_
+#ifndef _LSGL_PARSER_H_
+#define _LSGL_PARSER_H_
 #include "expr.h"
 #include "token.h"
 

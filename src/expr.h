@@ -1,5 +1,5 @@
-#ifndef _LOX_EXPR_H_
-#define _LOX_EXPR_H_
+#ifndef _LSGL_EXPR_H_
+#define _LSGL_EXPR_H_
 #include "token.h"
 
 typedef enum expr_type {
@@ -66,7 +66,8 @@ typedef struct assignment {
 typedef enum stmt_type {
     STMT_EXPR,
     STMT_PRINT,
-    STMT_VAR
+    STMT_VAR,
+    STMT_BLOCK
 } StmtType;
 
 typedef struct stmt {

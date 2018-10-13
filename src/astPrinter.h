@@ -1,5 +1,5 @@
-#ifndef _LOX_PRINT_AST_H
-#define _LOX_PRINT_AST_H
+#ifndef _LSGL_PRINT_AST_H_
+#define _LSGL_PRINT_AST_H_
 #include "expr.h"
 
 void* visitBinary(void* bExpr);

@@ -1,5 +1,5 @@
-#ifndef _LOX_VISITOR_H_
-#define _LOX_VISITOR_H_
+#ifndef _LSGL_VISITOR_H_
+#define _LSGL_VISITOR_H_
 #include "expr.h"
 
 typedef void* (*ActionExpr)(Expr*);

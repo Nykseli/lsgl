@@ -18,7 +18,7 @@ char* readLine(const char* prompt);
 int main(int argc, char* argv[]){
     
     if(argc > 2){
-        printf("Usage: clox [script]");
+        printf("Usage: LSGL [script]");
         //parse file
         return 64;
     }else if (argc == 2){
