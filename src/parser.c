@@ -28,6 +28,7 @@ static Stmt varStatement(Expr* initializer, Token name);
 static Stmt statement(ParsedTokens* PT);
 static Stmt varDeclaration(ParsedTokens* PT);
 static Stmt declaration(ParsedTokens* PT);
+static Stmt blockStatment(ParsedTokens* PT);
 
 static void error(ParsedTokens* PT, const char* msg);
 static Token consume(ParsedTokens* PT, TokenType type, const char* msg);
@@ -287,25 +288,49 @@ Expr* expression(ParsedTokens* PT){
 
 Stmt printStatement(ParsedTokens* PT){
     Stmt stmt;
+    PrintStmt* pStmt = malloc(sizeof(PrintStmt));
+    pStmt->expr = expression(PT);
     stmt.type = STMT_PRINT;
-    stmt.expr = expression(PT);
+    stmt.stmt = pStmt;
     consume(PT, SEMICOLON, "Expect ';' after value.");
     return stmt;
 }
 
 Stmt expressionStatement(ParsedTokens* PT){
     Stmt stmt;
+    ExprStmt* eStmt = malloc(sizeof(ExprStmt));
+    eStmt->expr = expression(PT);
     stmt.type = STMT_EXPR;
-    stmt.expr = expression(PT);
+    stmt.stmt = eStmt;
     consume(PT, SEMICOLON, "Expect ';' after value.");
     return stmt;
 }
 
 Stmt varStatement(Expr* initializer, Token name){
     Stmt stmt;
+    VarStmt* vStmt = malloc(sizeof(VarStmt));
+    vStmt->expr = initializer;
+    vStmt->name = name;
     stmt.type = STMT_VAR;
-    stmt.expr = initializer;
-    stmt.name = name;
+    stmt.stmt = vStmt;
+    return stmt;
+}
+Stmt blockStatment(ParsedTokens* PT){
+    Stmt stmt;
+    BlockStmt* bStmt = malloc(sizeof(VarStmt));
+    bStmt->statements = NULL;
+    bStmt->stmtLen = 0;
+
+    while(!MATCH(PT->tokens[PT->current].type, RIGHT_BRACE)){
+        bStmt->statements = realloc(bStmt->statements, sizeof(Stmt) * (bStmt->stmtLen + 1));
+        bStmt->statements[bStmt->stmtLen] = declaration(PT);
+        bStmt->stmtLen++;
+    }
+
+    stmt.type = STMT_BLOCK;
+    stmt.stmt = bStmt;
+    consume(PT, RIGHT_BRACE, "Expect '}' after block.");
+    
     return stmt;
 }
 
@@ -314,6 +339,10 @@ Stmt statement(ParsedTokens* PT) {
     if(MATCH(token.type, PRINT)){
         PT->current++;
         return printStatement(PT);
+    }
+    if(MATCH(token.type, LEFT_BRACE)){
+        PT->current++;
+        return blockStatment(PT);
     }
 
     return expressionStatement(PT);
@@ -357,7 +386,7 @@ ParsedStmt parseTokens(Tokenizer tokenizer){
         PS.stmt[PS.stmtLen] = declaration(PT);
         PS.stmtLen++;
     }
-
+    
     return PS;
 
 }

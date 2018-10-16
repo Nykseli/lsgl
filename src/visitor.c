@@ -25,5 +25,7 @@ void* acceptStmt(StatementVisitor visitor, Stmt* stmt){
             return visitor.visitPrint(stmt);
         case STMT_VAR:
             return visitor.visitVar(stmt);
+        case STMT_BLOCK:
+            return visitor.visitBlock(stmt);
     }
 }

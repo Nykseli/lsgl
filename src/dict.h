@@ -3,6 +3,7 @@
 
 #define DICT_INITIAL_CAPACITY 16
 #include "uthash.h"
+#include "env.h"
 
 typedef struct key_value_pair_t {
     char* key;
@@ -16,19 +17,15 @@ typedef struct dict_t {
     int count;
 } Dictionary;
 
-typedef struct EnvDict {
-    const char* key; // hash key
-    void* value;
-    UT_hash_handle hh;
-} EnvDict;
+
 
 Dictionary* dict();
 
 // int dictAdd(Dictionary* dict, const char* key, void* value);
-int dictAdd(EnvDict** dict, const char* key, void* value);
+int dictAdd(ExcecutionEnv* exceEnv, const char* key, void* value);
 int dictRemove(Dictionary* dict, const char* key);
-void* dictGet(EnvDict** dict, const char* key);
+void* dictGet(ExcecutionEnv* exceEnv, const char* key);
 void dictDestroy(Dictionary* dict);
 int dictContains(Dictionary* dict, const char* key);
-int dictSet(EnvDict** dict, const char* key, void* value);
+int dictSet(ExcecutionEnv* exceEnv, const char* key, void* value);
 #endif

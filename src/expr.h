@@ -72,13 +72,31 @@ typedef enum stmt_type {
 
 typedef struct stmt {
     StmtType type;
+    void* stmt;
+} Stmt;
+
+typedef struct stmt_expr {
+    Expr* expr;
+} ExprStmt;
+
+
+typedef struct stmt_print {
+    Expr* expr;
+} PrintStmt;
+
+typedef struct stmt_var {
     Token name;
     Expr* expr;
-} Stmt;
+} VarStmt;
 
 typedef struct stmt_parsed {
     Stmt* stmt;
     int stmtLen;
 } ParsedStmt;
+
+typedef struct stmt_block {
+    Stmt* statements;
+    int stmtLen;
+} BlockStmt;
 
 #endif

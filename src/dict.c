@@ -1,7 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "dict.h"
 #include "uthash.h"
+#include "expr.h"
+#include "env.h"
 
 static unsigned int hashCode(const char* key);
 static KeyValuePair* dictGetBucket(Dictionary* dict, const char* key);
@@ -40,17 +43,20 @@ Dictionary* dict()
 //     return 0;
 // }
 
-int dictAdd(struct EnvDict** dict, const char* key, void* value){
+int dictAdd(ExcecutionEnv* exceEnv, const char* key, void* value){
     struct EnvDict* d = NULL;
-    if(dict)
-        HASH_FIND_STR(*dict, key, d);
+    EnvDict** current = &exceEnv->variables;
+    if(current)
+        HASH_FIND(hh,*current, key, strlen(key),d);
     if(d == NULL){
         d = (struct EnvDict*)malloc(sizeof(struct EnvDict));
         d->key = key;
         d->value = value;
-        HASH_ADD_KEYPTR(hh, *dict, d->key, strlen(d->key), d);
+        HASH_ADD_KEYPTR(hh, *current, d->key, strlen(d->key), d);
         // HASH_ADD_STR(*dict, key, d);
         return 1;
+    }else{
+        
     }
     
     return 0;
@@ -119,31 +125,38 @@ static KeyValuePair* dictGetBucket(Dictionary* dict, const char* key)
     return NULL;
 }
 
-void* dictGet(struct EnvDict** dict, const char* key)
+void* dictGet(ExcecutionEnv* exceEnv, const char* key)
 {
     struct EnvDict* bucket;
-    HASH_FIND_STR(*dict, key, bucket);
+    EnvDict** current = &exceEnv->variables;
+    HASH_FIND_STR(*current, key, bucket);
     
     if(bucket == NULL){
-        printf("Bucket is NULL\n");
+        if (exceEnv->enclosing != NULL){
+            return dictGet(exceEnv->enclosing, key);
+        }    
     }
+
     return bucket != NULL ? bucket->value : NULL;
 }
 
-int dictSet(struct EnvDict** dict, const char* key, void* value)
-{
+int dictSet(ExcecutionEnv* exceEnv, const char* key, void* value){
     struct EnvDict* d;
     struct EnvDict* out;
-    HASH_FIND_STR(*dict, key, d);
+    EnvDict** current = &exceEnv->variables;
+    HASH_FIND_STR(*current, key, d);
     if(d != NULL){
         d = (struct EnvDict*)malloc(sizeof(EnvDict));
         d->key = key;
         d->value = value;
-        HASH_REPLACE_STR(*dict, key, d, out);
+        HASH_REPLACE_STR(*current, key, d, out);
         return 1;
     }
+    if(exceEnv->enclosing != NULL){
+        return dictSet(exceEnv->enclosing, key, value);
+    }
     // memcpy(d->value, value, sizeof(value));
-        printf("dictSet fail\n");
+
     return 0;
 }
 

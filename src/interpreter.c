@@ -19,6 +19,7 @@ static char* isTruthy(LiteralExpr* expr);
 static void* visitExpressionStmt(Stmt* stmt);
 static void* visitPrintStmt(Stmt* stmt);
 static void* visitVarStmt(Stmt* stmt);
+static void* visitBlockStmt(Stmt* stmt);
 static void execute(Stmt* stmt);
 
 static void* evaluate(Expr* expr);
@@ -26,8 +27,9 @@ static void* evaluate(Expr* expr);
 static Dictionary* enviromentDict;
 
 
+static ExcecutionEnv* currentEnv = NULL;
 
-static EnvDict* envDict = NULL;
+//static EnvDict* currentEnv->enclosing = NULL;
 
 
 ExpressionVisitor EvalExpressionVisitor = {
@@ -42,7 +44,8 @@ ExpressionVisitor EvalExpressionVisitor = {
 StatementVisitor EvalStatmentVisitor = {
     .visitExpression = visitExpressionStmt,
     .visitPrint = visitPrintStmt,
-    .visitVar = visitVarStmt
+    .visitVar = visitVarStmt,
+    .visitBlock = visitBlockStmt
 };
 
 static char* isNonTruthy(LiteralExpr* expr){
@@ -70,7 +73,8 @@ static int isEqual(LiteralExpr* left, LiteralExpr* right){
 }
 
 static void* evaluate(Expr* expr){
-    //printf("eval type: %d\n", expr->type);
+    if(expr == NULL)
+    printf("eval typeis null \n");
     return acceptExpr(EvalExpressionVisitor, expr);
 }
 
@@ -209,7 +213,7 @@ static void* visitBinaryExpr(void* expr){
 
 static void* visitVarExpr(void* expr){
     VarExpr* vExpr = (VarExpr*) expr;
-    LiteralExpr* lExpr = (LiteralExpr*)dictGet(&envDict, vExpr->name.lexeme);
+    LiteralExpr* lExpr = (LiteralExpr*)dictGet(currentEnv, vExpr->name.lexeme);
     if(lExpr == NULL){
         printf("lExpr from dict is NULL\n");
     }
@@ -222,7 +226,7 @@ static void* visitAssignExpr(void* expr){
     // VarExpr* vExpr = malloc(sizeof(VarExpr));
     // vExpr->name = aExpr->name;
     
-    if(dictSet(&envDict, aExpr->name.lexeme, lExpr) == 1){
+    if(dictSet(&currentEnv->variables, aExpr->name.lexeme, lExpr) == 1){
         return lExpr;
     }
     
@@ -230,14 +234,18 @@ static void* visitAssignExpr(void* expr){
 }
 
 static void* visitExpressionStmt(Stmt* stmt){
-    LiteralExpr* lExpr = (LiteralExpr*)evaluate(stmt->expr);
-    return NULL;
+    ExprStmt* eStmt = (ExprStmt*) stmt->stmt;
+    LiteralExpr* lExpr = (LiteralExpr*)evaluate(eStmt->expr);
+    if(lExpr == NULL){
+        printf("EXPRESSSION = NULL\n");
+    }
+    return lExpr;
 }
 
 static void* visitPrintStmt(Stmt* stmt){
-    
-    LiteralExpr* lExpr = (LiteralExpr*)evaluate(stmt->expr);
-    if(lExpr == NULL)
+    PrintStmt* pStmt = (PrintStmt*) stmt->stmt;
+    LiteralExpr* lExpr = (LiteralExpr*)evaluate(pStmt->expr);
+    if(lExpr == NULL) printf("kakels byls");
     
     if(lExpr->type == NULL) return NULL;
 
@@ -252,11 +260,33 @@ static void* visitPrintStmt(Stmt* stmt){
 }
 
 static void* visitVarStmt(Stmt* stmt){
-    LiteralExpr* lExpr = (LiteralExpr*)evaluate(stmt->expr);
+    VarStmt* vStmt = (VarStmt*) stmt->stmt;
+    LiteralExpr* lExpr = (LiteralExpr*)evaluate(vStmt->expr);
     
-    dictAdd(&envDict, stmt->name.lexeme, lExpr);
+    dictAdd(&currentEnv->variables, vStmt->name.lexeme, lExpr);
     
 }
+
+static ExcecutionEnv* newEnv(){
+    ExcecutionEnv* env = malloc(sizeof(ExcecutionEnv));
+    env->variables = NULL;
+    return env;
+}
+
+
+static void* visitBlockStmt(Stmt* stmt){
+    BlockStmt* bStmt = (BlockStmt*)stmt->stmt;
+    ExcecutionEnv* prev = currentEnv, *env = newEnv();
+    env->enclosing = prev;
+    currentEnv = env;
+    for(int i = 0; i< bStmt->stmtLen; i++){
+        execute(&bStmt->statements[i]);
+    }
+
+    currentEnv = prev;
+    return NULL;
+}
+
 
 static void execute(Stmt* stmt){
     acceptStmt(EvalStatmentVisitor, stmt);
@@ -264,6 +294,9 @@ static void execute(Stmt* stmt){
 
 void interpret(ParsedStmt stmts){
     enviromentDict = dict();
+    currentEnv = realloc(currentEnv, sizeof(currentEnv));
+    currentEnv->enclosing = NULL;
+    currentEnv->variables = NULL;
     int i;
     for(i = 0; i < stmts.stmtLen; i++){
         execute(&stmts.stmt[i]);

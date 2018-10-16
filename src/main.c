@@ -53,14 +53,17 @@ void runFile(char* filePath){
     //printf("%s", codeInfo->chars);
     Tokenizer tokenzr = tokenizer(codeInfo);
 
-    // for(int i = 0;  i< tokenzr.tokensLen; i++){
-    //     printf("lexeme: %s %d\n", tokenzr.tokens[i].lexeme, tokenzr.tokens[i].line);
-    //     printf("type: %d\n", (int)tokenzr.tokens[i].type);
-    //     if(tokenzr.tokens[i].literal != NULL){
-    //     printf("lexeme lit: %s\n", tokenzr.tokens[i].literal);
-    //     printf("lexeme lit len: %d\n", strlen(tokenzr.tokens[i].literal));
-    //     }
-    // }
+    //for(int i = 0;  i< tokenzr.tokensLen; i++){
+        //if(tokenzr.tokens[i].type == LEFT_BRACE || tokenzr.tokens[i].type == RIGHT_BRACE){
+        
+        //printf("lexeme: %s %d\n", tokenzr.tokens[i].lexeme, tokenzr.tokens[i].line);
+        //printf("type: %d\n", (int)tokenzr.tokens[i].type);
+        //}
+        //if(tokenzr.tokens[i].literal != NULL){
+        // printf("lexeme lit: %s\n", tokenzr.tokens[i].literal);
+        // printf("lexeme lit len: %d\n", strlen(tokenzr.tokens[i].literal));
+        //}
+    //}
     ParsedStmt stmts = parseTokens(tokenzr);
 
     if(stmts.stmt != NULL){
