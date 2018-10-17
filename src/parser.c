@@ -22,13 +22,14 @@ static Expr* variable(ParsedTokens* PT);
 static Expr* assignment(ParsedTokens* PT);
 static Token previous(ParsedTokens* PT);
 
-static Stmt expressionStatement(ParsedTokens* PT);
-static Stmt printStatement(ParsedTokens* PT);
-static Stmt varStatement(Expr* initializer, Token name);
-static Stmt statement(ParsedTokens* PT);
-static Stmt varDeclaration(ParsedTokens* PT);
-static Stmt declaration(ParsedTokens* PT);
-static Stmt blockStatment(ParsedTokens* PT);
+static Stmt* expressionStatement(ParsedTokens* PT);
+static Stmt* printStatement(ParsedTokens* PT);
+static Stmt* varStatement(Expr* initializer, Token name);
+static Stmt* statement(ParsedTokens* PT);
+static Stmt* varDeclaration(ParsedTokens* PT);
+static Stmt* declaration(ParsedTokens* PT);
+static Stmt* blockStatment(ParsedTokens* PT);
+static Stmt* ifStatment(ParsedTokens* PT);
 
 static void error(ParsedTokens* PT, const char* msg);
 static Token consume(ParsedTokens* PT, TokenType type, const char* msg);
@@ -286,37 +287,37 @@ Expr* expression(ParsedTokens* PT){
 
 
 
-Stmt printStatement(ParsedTokens* PT){
-    Stmt stmt;
+Stmt* printStatement(ParsedTokens* PT){
+    Stmt* stmt = malloc(sizeof(Stmt));
     PrintStmt* pStmt = malloc(sizeof(PrintStmt));
     pStmt->expr = expression(PT);
-    stmt.type = STMT_PRINT;
-    stmt.stmt = pStmt;
+    stmt->type = STMT_PRINT;
+    stmt->stmt = pStmt;
     consume(PT, SEMICOLON, "Expect ';' after value.");
     return stmt;
 }
 
-Stmt expressionStatement(ParsedTokens* PT){
-    Stmt stmt;
+Stmt* expressionStatement(ParsedTokens* PT){
+    Stmt* stmt = malloc(sizeof(Stmt));
     ExprStmt* eStmt = malloc(sizeof(ExprStmt));
     eStmt->expr = expression(PT);
-    stmt.type = STMT_EXPR;
-    stmt.stmt = eStmt;
+    stmt->type = STMT_EXPR;
+    stmt->stmt = eStmt;
     consume(PT, SEMICOLON, "Expect ';' after value.");
     return stmt;
 }
 
-Stmt varStatement(Expr* initializer, Token name){
-    Stmt stmt;
+Stmt* varStatement(Expr* initializer, Token name){
+    Stmt* stmt = malloc(sizeof(Stmt));
     VarStmt* vStmt = malloc(sizeof(VarStmt));
     vStmt->expr = initializer;
     vStmt->name = name;
-    stmt.type = STMT_VAR;
-    stmt.stmt = vStmt;
+    stmt->type = STMT_VAR;
+    stmt->stmt = vStmt;
     return stmt;
 }
-Stmt blockStatment(ParsedTokens* PT){
-    Stmt stmt;
+Stmt* blockStatment(ParsedTokens* PT){
+    Stmt* stmt = malloc(sizeof(Stmt));
     BlockStmt* bStmt = malloc(sizeof(VarStmt));
     bStmt->statements = NULL;
     bStmt->stmtLen = 0;
@@ -327,15 +328,44 @@ Stmt blockStatment(ParsedTokens* PT){
         bStmt->stmtLen++;
     }
 
-    stmt.type = STMT_BLOCK;
-    stmt.stmt = bStmt;
+    stmt->type = STMT_BLOCK;
+    stmt->stmt = bStmt;
     consume(PT, RIGHT_BRACE, "Expect '}' after block.");
     
     return stmt;
 }
 
-Stmt statement(ParsedTokens* PT) {
+Stmt* ifStatment(ParsedTokens* PT){
+    Stmt* stmt = malloc(sizeof(Stmt));
+    IfStmt* iStmt = malloc(sizeof(IfStmt));
+    consume(PT, LEFT_PAREN, "Expect '(' after 'if'.");
+    Expr* condition = expression(PT);
+    consume(PT, RIGHT_PAREN, "Expect ')' after if condition");
+
+    Stmt* thenBranch = statement(PT);
+    Stmt* elseBranch = NULL;
+    if(MATCH(PT->tokens[PT->current].type, ELSE)){
+        PT->current++;
+        elseBranch = realloc(elseBranch, sizeof(Stmt));
+        elseBranch = statement(PT);
+    }
+
+    iStmt->condition = condition;
+    iStmt->thenBranch = thenBranch;
+    iStmt->elseBranch = elseBranch;
+
+    stmt->type = STMT_IF;
+    stmt->stmt = iStmt;
+
+    return stmt;
+}
+
+Stmt* statement(ParsedTokens* PT) {
     Token token = PT->tokens[PT->current];
+    if(MATCH(token.type, IF)){
+        PT->current++;
+        return ifStatment(PT);
+    }
     if(MATCH(token.type, PRINT)){
         PT->current++;
         return printStatement(PT);
@@ -348,7 +378,7 @@ Stmt statement(ParsedTokens* PT) {
     return expressionStatement(PT);
 }
 
-Stmt varDeclaration(ParsedTokens* PT) {
+Stmt* varDeclaration(ParsedTokens* PT) {
     Token name = consume(PT, IDENTIFIER, "Expected variable name.");
     
     Expr* initializer = NULL;
@@ -362,7 +392,7 @@ Stmt varDeclaration(ParsedTokens* PT) {
     return varStatement(initializer, name);
 }
 
-Stmt declaration(ParsedTokens* PT) {
+Stmt* declaration(ParsedTokens* PT) {
     Token token = PT->tokens[PT->current];
     if(MATCH(token.type, VAR)){
         PT->current++;

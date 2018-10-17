@@ -20,6 +20,7 @@ static void* visitExpressionStmt(Stmt* stmt);
 static void* visitPrintStmt(Stmt* stmt);
 static void* visitVarStmt(Stmt* stmt);
 static void* visitBlockStmt(Stmt* stmt);
+static void* visitIfStmt(Stmt* stmt);
 static void execute(Stmt* stmt);
 
 static void* evaluate(Expr* expr);
@@ -45,17 +46,36 @@ StatementVisitor EvalStatmentVisitor = {
     .visitExpression = visitExpressionStmt,
     .visitPrint = visitPrintStmt,
     .visitVar = visitVarStmt,
-    .visitBlock = visitBlockStmt
+    .visitBlock = visitBlockStmt,
+    .visitIf = visitIfStmt,
 };
 
-static char* isNonTruthy(LiteralExpr* expr){
+static char* isTruthy(LiteralExpr* lExpr){
+
+    if(lExpr){
+        return 1;
+    }
+    return 0;
+}
+
+static const char* isNonTruthy(LiteralExpr* expr){
     if(expr->type == NULL_L) return FALSE_KEY;
 
     if(expr->type == LITERAL_BOOL){
-        strcmp(TRUE_KEY, (const char*)expr->value) != 0 ? TRUE_KEY : FALSE_KEY;
+        return strcmp(TRUE_KEY, (const char*)expr->value) != 0 ? TRUE_KEY : FALSE_KEY;
     }
 
     return FALSE_KEY;
+}
+
+static int isTrue(LiteralExpr* expr){
+    if(expr->type == NULL_L) return 0;
+
+    if(expr->type == LITERAL_BOOL){
+        return strcmp(TRUE_KEY, (const char*)expr->value) != 0 ? 0 : 1;
+    }
+
+    return 0;
 }
 
 static int isEqual(LiteralExpr* left, LiteralExpr* right){
@@ -280,13 +300,24 @@ static void* visitBlockStmt(Stmt* stmt){
     env->enclosing = prev;
     currentEnv = env;
     for(int i = 0; i< bStmt->stmtLen; i++){
-        execute(&bStmt->statements[i]);
+        execute(bStmt->statements[i]);
     }
 
     currentEnv = prev;
     return NULL;
 }
 
+static void* visitIfStmt(Stmt* stmt){
+    IfStmt* iStmt = (IfStmt*)stmt->stmt;
+    LiteralExpr* lExpr = (LiteralExpr*) evaluate(iStmt->condition);
+    //if(strcmp(isNonTruthy(lExpr), (char*)TRUE_KEY) == 0){
+    if(isTrue(lExpr)){
+        execute(iStmt->thenBranch);
+    }else if(iStmt->thenBranch != NULL){
+        execute(iStmt->elseBranch);
+    }
+    return NULL;
+}
 
 static void execute(Stmt* stmt){
     acceptStmt(EvalStatmentVisitor, stmt);
@@ -299,6 +330,6 @@ void interpret(ParsedStmt stmts){
     currentEnv->variables = NULL;
     int i;
     for(i = 0; i < stmts.stmtLen; i++){
-        execute(&stmts.stmt[i]);
+        execute(stmts.stmt[i]);
     }
 }

@@ -67,7 +67,8 @@ typedef enum stmt_type {
     STMT_EXPR,
     STMT_PRINT,
     STMT_VAR,
-    STMT_BLOCK
+    STMT_BLOCK,
+    STMT_IF
 } StmtType;
 
 typedef struct stmt {
@@ -90,13 +91,19 @@ typedef struct stmt_var {
 } VarStmt;
 
 typedef struct stmt_parsed {
-    Stmt* stmt;
+    Stmt** stmt;
     int stmtLen;
 } ParsedStmt;
 
 typedef struct stmt_block {
-    Stmt* statements;
+    Stmt** statements;
     int stmtLen;
 } BlockStmt;
+
+typedef struct stmt_if {
+    Expr* condition;
+    Stmt* thenBranch;
+    Stmt* elseBranch;
+} IfStmt;
 
 #endif

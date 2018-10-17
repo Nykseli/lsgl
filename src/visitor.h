@@ -22,6 +22,7 @@ typedef struct stmt_visitor {
     ActionStmt visitExpression;
     ActionStmt visitVar;
     ActionStmt visitBlock;
+    ActionStmt visitIf;
 } StatementVisitor;
 
 void* acceptStmt(StatementVisitor visitor, Stmt* stmt);

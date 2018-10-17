@@ -274,6 +274,7 @@ Tokenizer tokenizer(CodeInfo* ci){
                     while(current < codeLength && codeChars[current] != '\n'){
                         current++;
                     }
+                //TODO: Fix multiline comments
                 }else if(matchNext(codeChars, '*', codeLength, &current)){
                     while(current < codeLength){
                         if(codeChars[current] == '*' && codeChars[current + 1] == '/'){
