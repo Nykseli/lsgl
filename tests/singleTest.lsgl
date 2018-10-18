@@ -1,8 +1,8 @@
 
-print "moro" + "kikkeli";
+print "moro" + "poro";
 var moro =  5 + 6;
-moro = "kakka";
-var poro = "pylly";
+moro = "moro";
+var poro = "poro";
 print moro + poro;
 
 var a = "global a";
@@ -27,7 +27,25 @@ print a;
 print b;
 print c;
 
+print null or "heps";
+print 2 or "hei";
 
-if ("kakka" == "kakka") print "moi";
+if ("torppa" == "torppa") print "moi";
 else print "hei";
 
+var i = 0;
+while (i < 5) {
+  i = i + 1;
+  print i;
+
+}
+
+var tmp1 = 0;
+var tmp2 = 1;
+
+while (tmp1 < 10000) {
+  print tmp1;
+  var temp = tmp1;
+  tmp1 = tmp2;
+  tmp2 = temp + tmp2;
+}

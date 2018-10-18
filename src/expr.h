@@ -63,12 +63,19 @@ typedef struct assignment {
     Expr* value;
 }AssignExpr;
 
+typedef struct stmt_logical {
+    Token op;
+    Expr* left;
+    Expr* right;
+} LogicalExpr;
+
 typedef enum stmt_type {
     STMT_EXPR,
     STMT_PRINT,
     STMT_VAR,
     STMT_BLOCK,
-    STMT_IF
+    STMT_IF,
+    STMT_WHILE,
 } StmtType;
 
 typedef struct stmt {
@@ -105,5 +112,10 @@ typedef struct stmt_if {
     Stmt* thenBranch;
     Stmt* elseBranch;
 } IfStmt;
+
+typedef struct stmt_while {
+    Expr* condition;
+    Stmt* body;
+} WhileStmt;
 
 #endif

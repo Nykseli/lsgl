@@ -13,6 +13,7 @@ static void* visitUnaryExpr(void* expr);
 static void* visitBinaryExpr(void* expr);
 static void* visitVarExpr(void* expr);
 static void* visitAssignExpr(void* stmt);
+static void* visitLogicalExpr(void* stmt);
 
 static char* isTruthy(LiteralExpr* expr);
 
@@ -21,6 +22,7 @@ static void* visitPrintStmt(Stmt* stmt);
 static void* visitVarStmt(Stmt* stmt);
 static void* visitBlockStmt(Stmt* stmt);
 static void* visitIfStmt(Stmt* stmt);
+static void* visitWhileStmt(Stmt* stmt);
 static void execute(Stmt* stmt);
 
 static void* evaluate(Expr* expr);
@@ -39,7 +41,8 @@ ExpressionVisitor EvalExpressionVisitor = {
     .visitUnary = visitUnaryExpr,
     .visitBinary = visitBinaryExpr,
     .visitVar = visitVarExpr,
-    .visitAssign = visitAssignExpr
+    .visitAssign = visitAssignExpr,
+    .visitLogical = visitLogicalExpr
 };
 
 StatementVisitor EvalStatmentVisitor = {
@@ -48,6 +51,7 @@ StatementVisitor EvalStatmentVisitor = {
     .visitVar = visitVarStmt,
     .visitBlock = visitBlockStmt,
     .visitIf = visitIfStmt,
+    .visitWhile = visitWhileStmt,
 };
 
 static char* isTruthy(LiteralExpr* lExpr){
@@ -74,6 +78,9 @@ static int isTrue(LiteralExpr* expr){
     if(expr->type == LITERAL_BOOL){
         return strcmp(TRUE_KEY, (const char*)expr->value) != 0 ? 0 : 1;
     }
+
+    if(expr->type == LITERAL_NUMBER) return 1;
+    if(expr->type == LITERAL_STRING) return 1;
 
     return 0;
 }
@@ -253,6 +260,19 @@ static void* visitAssignExpr(void* expr){
     return NULL;
 }
 
+static void* visitLogicalExpr(void* expr) {
+    LogicalExpr* loExpr = (LogicalExpr*) expr;
+    LiteralExpr* left = evaluate(loExpr->left);
+
+    if(loExpr->op.type == OR){
+        if(isTrue(left)) return left;
+    }else{
+        if(!isTrue(left)) return left;
+    } 
+
+    return evaluate(loExpr->right);
+}
+
 static void* visitExpressionStmt(Stmt* stmt){
     ExprStmt* eStmt = (ExprStmt*) stmt->stmt;
     LiteralExpr* lExpr = (LiteralExpr*)evaluate(eStmt->expr);
@@ -273,9 +293,9 @@ static void* visitPrintStmt(Stmt* stmt){
         //printf("Interpret string: %s\n", (char*) lExpr->value);
         printf("%s\n", (char*) lExpr->value);
     }else if(lExpr->type == LITERAL_NUMBER){
-        printf("Interpret double: %f\n", *((double*) lExpr->value));
+        printf("%f\n", *((double*) lExpr->value));
     }else if(lExpr->type == LITERAL_BOOL){
-        printf("Interpret boolean: %s\n", (char*) lExpr->value);
+        printf("%s\n", (char*) lExpr->value);
     }
 }
 
@@ -318,6 +338,19 @@ static void* visitIfStmt(Stmt* stmt){
     }
     return NULL;
 }
+
+static void* visitWhileStmt(Stmt* stmt){
+   // Stmt* sStmt = (Stmt*)stmt->stmt;
+    WhileStmt* wStmt = (WhileStmt*)stmt->stmt;
+    
+
+    while(isTrue((LiteralExpr*)evaluate(wStmt->condition))){
+        execute(wStmt->body);
+    }
+
+    return NULL;
+}
+
 
 static void execute(Stmt* stmt){
     acceptStmt(EvalStatmentVisitor, stmt);

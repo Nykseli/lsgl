@@ -9,6 +9,7 @@
 //TODO: ERROR HANDLING AND PANIC MODE!!!
 
 static BinaryExpr* newBinary(Token op, Expr* left, Expr* right);
+static LogicalExpr* newLogical(Token op, Expr* left, Expr* right);
 static Expr* newExpr(ExpressionType type, void* rExpr);
 static Expr* equality(ParsedTokens* PT);
 static Expr* comparison(ParsedTokens* PT);
@@ -20,6 +21,8 @@ static Expr* grouping(ParsedTokens* PT);
 static Expr* expression(ParsedTokens* PT);
 static Expr* variable(ParsedTokens* PT);
 static Expr* assignment(ParsedTokens* PT);
+static Expr* or(ParsedTokens* PT);
+static Expr* and(ParsedTokens* PT);
 static Token previous(ParsedTokens* PT);
 
 static Stmt* expressionStatement(ParsedTokens* PT);
@@ -30,6 +33,7 @@ static Stmt* varDeclaration(ParsedTokens* PT);
 static Stmt* declaration(ParsedTokens* PT);
 static Stmt* blockStatment(ParsedTokens* PT);
 static Stmt* ifStatment(ParsedTokens* PT);
+static Stmt* whileStatment(ParsedTokens* PT);
 
 static void error(ParsedTokens* PT, const char* msg);
 static Token consume(ParsedTokens* PT, TokenType type, const char* msg);
@@ -126,6 +130,15 @@ AssignExpr* newAssign(Token name, Expr* value){
     aExpr->name = name;
     aExpr->value = value;
     return aExpr;
+}
+
+LogicalExpr* newLogical(Token op, Expr* right, Expr* left){
+    LogicalExpr* loExpr = malloc(sizeof(LogicalExpr));
+    loExpr->op = op;
+    loExpr->right = right;
+    loExpr->left = left;
+
+    return loExpr;
 }
 
 Expr* equality(ParsedTokens* PT){
@@ -264,7 +277,7 @@ Expr* primary(ParsedTokens* PT){
 }
 
 Expr* assignment(ParsedTokens* PT){
-    Expr* eExpr = equality(PT);
+    Expr* eExpr = or(PT);
 
     Token types[] = { EQUAL }; 
     if(match(PT, PT->tokens[PT->current].type, types, 1)){
@@ -279,6 +292,32 @@ Expr* assignment(ParsedTokens* PT){
         error(PT, "Invalid assignment target.");
     }
     return eExpr;
+}
+
+Expr* or(ParsedTokens* PT){
+    Expr* expr = and(PT);
+
+   TokenType types[] = {OR};
+    while(match(PT, PT->tokens[PT->current].type, types, 1)){
+        Token operator = previous(PT);
+        Expr* right = and(PT);
+        return newExpr(EXPR_LOGICAL, newLogical(operator, right, expr));
+    }
+
+    return expr;
+}
+
+Expr* and(ParsedTokens* PT){
+    Expr* expr = equality(PT);
+
+   TokenType types[] = {AND};
+    while(match(PT, PT->tokens[PT->current].type, types, 1)){
+        Token operator = previous(PT);
+        Expr* right = equality(PT);
+        return newExpr(EXPR_LOGICAL, newLogical(operator, right, expr));
+    }
+
+    return expr;
 }
 
 Expr* expression(ParsedTokens* PT){
@@ -360,8 +399,31 @@ Stmt* ifStatment(ParsedTokens* PT){
     return stmt;
 }
 
+Stmt* whileStatment(ParsedTokens* PT){
+    Stmt* stmt = malloc(sizeof(Stmt));
+    WhileStmt* wStmt = malloc(sizeof(WhileStmt));
+    
+    consume(PT, LEFT_PAREN, "Expect '(' after 'while'.");
+    Expr* condition = expression(PT);
+    consume(PT, RIGHT_PAREN, "Expect ')' after condition.");
+    
+    Stmt* body = statement(PT);
+
+    wStmt->body = body;
+    wStmt->condition = condition;
+
+    stmt->type = STMT_WHILE;
+    stmt->stmt = wStmt;
+
+    return stmt;
+}
+
 Stmt* statement(ParsedTokens* PT) {
     Token token = PT->tokens[PT->current];
+    if(MATCH(token.type, WHILE)){
+        PT->current++;
+        return whileStatment(PT);
+    }
     if(MATCH(token.type, IF)){
         PT->current++;
         return ifStatment(PT);

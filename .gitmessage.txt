@@ -1,0 +1,11 @@
+If this commit is applied, it will:
+
+*
+
+Why:
+
+*
+
+# Bugs fixed, start with BUG: whole description and extra emty line
+# New features added, start with FEATURE: whole description and extra emty line
+# Dependencies added, start with DEPENDENCY: whole description and extra emty line 

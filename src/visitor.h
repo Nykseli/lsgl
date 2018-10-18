@@ -11,6 +11,7 @@ typedef struct expression_visitor {
     ActionExpr visitGrouping;
     ActionExpr visitVar;
     ActionExpr visitAssign;
+    ActionExpr visitLogical;
 } ExpressionVisitor;
 
 void* acceptExpr(ExpressionVisitor visitor, Expr* expr);
@@ -23,6 +24,7 @@ typedef struct stmt_visitor {
     ActionStmt visitVar;
     ActionStmt visitBlock;
     ActionStmt visitIf;
+    ActionStmt visitWhile;
 } StatementVisitor;
 
 void* acceptStmt(StatementVisitor visitor, Stmt* stmt);
