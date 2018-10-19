@@ -14,4 +14,5 @@ void except(const char* format, ...){
     va_start(list, format);
     vfprintf(stderr, format, list);
     va_end(list);
+    exit(1);
 }

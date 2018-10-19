@@ -49,3 +49,8 @@ while (tmp1 < 10000) {
   tmp1 = tmp2;
   tmp2 = temp + tmp2;
 }
+
+var xd = 5;
+for(var j = 0; j < xd; j = j + 1){
+  print "hello for loop";
+}

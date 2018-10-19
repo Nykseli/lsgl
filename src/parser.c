@@ -25,6 +25,7 @@ static Expr* or(ParsedTokens* PT);
 static Expr* and(ParsedTokens* PT);
 static Token previous(ParsedTokens* PT);
 
+static Stmt* newStatement(StmtType type, void* stmt);
 static Stmt* expressionStatement(ParsedTokens* PT);
 static Stmt* printStatement(ParsedTokens* PT);
 static Stmt* varStatement(Expr* initializer, Token name);
@@ -34,6 +35,7 @@ static Stmt* declaration(ParsedTokens* PT);
 static Stmt* blockStatment(ParsedTokens* PT);
 static Stmt* ifStatment(ParsedTokens* PT);
 static Stmt* whileStatment(ParsedTokens* PT);
+static Stmt* forStatment(ParsedTokens* PT);
 
 static void error(ParsedTokens* PT, const char* msg);
 static Token consume(ParsedTokens* PT, TokenType type, const char* msg);
@@ -325,6 +327,12 @@ Expr* expression(ParsedTokens* PT){
 }
 
 
+Stmt* newStatement(StmtType type, void* stmt){
+    Stmt* nStmt = malloc(sizeof(Stmt));
+    nStmt->type = type;    
+    nStmt->stmt = stmt;    
+    return nStmt;
+}
 
 Stmt* printStatement(ParsedTokens* PT){
     Stmt* stmt = malloc(sizeof(Stmt));
@@ -418,8 +426,84 @@ Stmt* whileStatment(ParsedTokens* PT){
     return stmt;
 }
 
+static Stmt* forStatment(ParsedTokens* PT){
+    Stmt* body = NULL;
+    Stmt* initializer = NULL;
+    Expr* increment = NULL;
+    Expr* condition = NULL;
+    
+    BlockStmt* wrappedBody = NULL;
+    BlockStmt* wrappedForAndInit = NULL;
+
+    WhileStmt* wrapperFor = NULL;
+    
+    ExprStmt* wrappedStep = NULL; 
+    
+
+    consume(PT, LEFT_PAREN, "Expect '(' after 'for'.");
+
+    if(MATCH(PT->tokens[PT->current].type, SEMICOLON)){
+        PT->current++;        
+        initializer = NULL;
+    }else if(MATCH(PT->tokens[PT->current].type, VAR)){
+        PT->current++;    
+        initializer = varDeclaration(PT);
+    }else{ 
+        initializer = expressionStatement(PT);
+    }
+    
+    if(!MATCH(PT->tokens[PT->current].type, SEMICOLON)){
+        condition = expression(PT);
+    }
+    consume(PT, SEMICOLON, "Expect ';' after loop condition.");
+
+    if(!MATCH(PT->tokens[PT->current].type, RIGHT_PAREN)){
+        increment = expression(PT);
+    }
+    consume(PT, RIGHT_PAREN, "Expect ')' after for clauses.");
+
+    body = statement(PT);
+    if(increment != NULL){
+        wrappedBody = malloc(sizeof(BlockStmt));
+        wrappedBody->statements = malloc(sizeof(Stmt) * 2);
+        wrappedStep = malloc(sizeof(ExprStmt));
+        wrappedStep->expr = increment;
+
+        wrappedBody->statements[0] = body;
+        wrappedBody->statements[1] = newStatement(STMT_EXPR, wrappedStep);
+        wrappedBody->stmtLen = 2;
+    
+        body = newStatement(STMT_BLOCK, wrappedBody);
+    }
+
+    if(condition == NULL){
+        condition = newStatement(EXPR_LITERAL, newLiteral(LITERAL_BOOL, 1));
+    }
+
+    wrapperFor = malloc(sizeof(WhileStmt));
+    wrapperFor->condition = condition;
+    wrapperFor->body = body;
+    body = newStatement(STMT_WHILE, wrapperFor);
+
+    if(initializer != NULL){
+        wrappedForAndInit = malloc(sizeof(BlockStmt));
+        wrappedForAndInit->statements = malloc(sizeof(Stmt) * 2);
+        wrappedForAndInit->statements[0] = initializer;
+        wrappedForAndInit->statements[1] = body;
+        wrappedForAndInit->stmtLen = 2;
+
+        body = newStatement(STMT_BLOCK, wrappedForAndInit);
+    }
+
+    return body;
+}
+
 Stmt* statement(ParsedTokens* PT) {
     Token token = PT->tokens[PT->current];
+    if(MATCH(token.type, FOR)){
+        PT->current++;
+        return forStatment(PT);
+    }
     if(MATCH(token.type, WHILE)){
         PT->current++;
         return whileStatment(PT);
