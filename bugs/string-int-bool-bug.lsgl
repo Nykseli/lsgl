@@ -1,0 +1,3 @@
+
+if(0) print "Hello";
+if("") print "Hello two";

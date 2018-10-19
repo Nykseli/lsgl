@@ -1,0 +1,10 @@
+while (x < 5) {
+	print x;	
+	if ( x < 2 ) print "Hei Maailma!";
+	x = x + 1;
+}
+
+//test also forloops
+for(var y = 0; y < 5; y = y + 1) {
+	if ( x < 2 ) print "Hei kaikki";
+}
