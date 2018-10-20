@@ -274,10 +274,13 @@ Tokenizer tokenizer(CodeInfo* ci){
                     while(current < codeLength && codeChars[current] != '\n'){
                         current++;
                     }
-                //TODO: Fix multiline comments
                 }else if(matchNext(codeChars, '*', codeLength, &current)){
                     while(current < codeLength){
                         if(codeChars[current] == '*' && codeChars[current + 1] == '/'){
+                            //add 2 to current to skip * and / chars.
+                            //wihtout this, * and / will be counted as tokens and
+                            //it breaks the program
+                            current = current + 2;
                             break;
                         }
                         if(codeChars[current] == '\n') line++;

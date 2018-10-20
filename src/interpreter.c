@@ -79,8 +79,15 @@ static int isTrue(LiteralExpr* expr){
         return strcmp(TRUE_KEY, (const char*)expr->value) != 0 ? 0 : 1;
     }
 
-    if(expr->type == LITERAL_NUMBER) return 1;
-    if(expr->type == LITERAL_STRING) return 1;
+    if(expr->type == LITERAL_NUMBER) {
+        //value zero is consired as false
+        return *((double*)expr->value) == 0 ? 0 : 1;
+    }
+    
+    if(expr->type == LITERAL_STRING){
+        //empty string is consired as false
+        return ((const char*)expr->value)[0] == '\0' ? 0 : 1;
+    }
 
     return 0;
 }
@@ -276,9 +283,6 @@ static void* visitLogicalExpr(void* expr) {
 static void* visitExpressionStmt(Stmt* stmt){
     ExprStmt* eStmt = (ExprStmt*) stmt->stmt;
     LiteralExpr* lExpr = (LiteralExpr*)evaluate(eStmt->expr);
-    if(lExpr == NULL){
-        printf("EXPRESSSION = NULL\n");
-    }
     return lExpr;
 }
 
@@ -333,7 +337,7 @@ static void* visitIfStmt(Stmt* stmt){
     //if(strcmp(isNonTruthy(lExpr), (char*)TRUE_KEY) == 0){
     if(isTrue(lExpr)){
         execute(iStmt->thenBranch);
-    }else if(iStmt->thenBranch != NULL){
+    }else if(iStmt->elseBranch != NULL){
         execute(iStmt->elseBranch);
     }
     return NULL;
