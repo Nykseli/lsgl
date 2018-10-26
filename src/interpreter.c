@@ -14,7 +14,10 @@ static void* visitBinaryExpr(void* expr);
 static void* visitVarExpr(void* expr);
 static void* visitAssignExpr(void* stmt);
 static void* visitLogicalExpr(void* stmt);
+static void* visitCallExpr(void* expr);
 
+//static void* functionCall(Token paren, Callee callee, Expr** args, int argLen);
+static void* functionCall();
 static char* isTruthy(LiteralExpr* expr);
 
 static void* visitExpressionStmt(Stmt* stmt);
@@ -23,13 +26,16 @@ static void* visitVarStmt(Stmt* stmt);
 static void* visitBlockStmt(Stmt* stmt);
 static void* visitIfStmt(Stmt* stmt);
 static void* visitWhileStmt(Stmt* stmt);
+static void* visitFunctionStmt(Stmt* stmt);
 static void execute(Stmt* stmt);
 
 static void* evaluate(Expr* expr);
 
+static ExcecutionEnv* newEnv();
+
 static Dictionary* enviromentDict;
 
-
+//TODO: global functions in global exce env
 static ExcecutionEnv* currentEnv = NULL;
 
 //static EnvDict* currentEnv->enclosing = NULL;
@@ -42,7 +48,8 @@ ExpressionVisitor EvalExpressionVisitor = {
     .visitBinary = visitBinaryExpr,
     .visitVar = visitVarExpr,
     .visitAssign = visitAssignExpr,
-    .visitLogical = visitLogicalExpr
+    .visitLogical = visitLogicalExpr,
+    .visitCall = visitCallExpr,
 };
 
 StatementVisitor EvalStatmentVisitor = {
@@ -52,7 +59,49 @@ StatementVisitor EvalStatmentVisitor = {
     .visitBlock = visitBlockStmt,
     .visitIf = visitIfStmt,
     .visitWhile = visitWhileStmt,
+    .visitFunction = visitFunctionStmt,
 };
+
+/**
+* This function is used to set the CallExpr Callee variable
+* This "executes" the definied function 
+*/
+//static void* functionCall(Token paren, Callee callee, Expr** args, int argLen){
+static void* functionCall(FunctionStmt* fStmt, LiteralExpr** arguments){
+    //TODO: i need stmt block that basicly contains the function
+    // i also need values of the argumens so i can assing then to the block scope
+    // after the arguments are assigned to block scope, i just run the scope
+    // i deal with the function return value later
+
+    /*
+BlockStmt* bStmt = (BlockStmt*)stmt->stmt;
+    ExcecutionEnv* prev = currentEnv, *env = newEnv();
+    env->enclosing = prev;
+    currentEnv = env;
+    for(int i = 0; i< bStmt->stmtLen; i++){
+        execute(bStmt->statements[i]);
+    }
+
+    currentEnv = prev;
+    */
+
+   BlockStmt* bStmt = fStmt->body;
+   ExcecutionEnv* prev = currentEnv, *env = newEnv();
+   env->enclosing = prev;
+   currentEnv = env;
+   for(int i = 0; i < fStmt->paramLen; i++){
+       dictAdd(&currentEnv->variables, fStmt->params[i].lexeme, arguments[i]);
+   }
+
+   for(int i = 0; i< bStmt->stmtLen; i++){
+        execute(bStmt->statements[i]);
+    }
+
+    currentEnv = prev;
+
+    return NULL;
+}
+
 
 static char* isTruthy(LiteralExpr* lExpr){
 
@@ -246,6 +295,10 @@ static void* visitBinaryExpr(void* expr){
 }
 
 static void* visitVarExpr(void* expr){
+    //TODO: refactor this to support functions (and objects)
+    //note that dictGet returns void* maybe just return that and
+    //let the "reciever" handle the type conversion since everything does
+    //that allready
     VarExpr* vExpr = (VarExpr*) expr;
     LiteralExpr* lExpr = (LiteralExpr*)dictGet(currentEnv, vExpr->name.lexeme);
     if(lExpr == NULL){
@@ -280,9 +333,55 @@ static void* visitLogicalExpr(void* expr) {
     return evaluate(loExpr->right);
 }
 
+static void* visitCallExpr(void* expr){
+    CallExpr* cExpr = (CallExpr*)expr;
+
+    //TODO: here evaluate gets a void pointer that refers to 
+    // function statement that we have stored in to the
+    // excecution hasmap. so this should to FunctionStmt
+    //TODO: should this evaluate somekind of struct that has functions and obejcts?
+
+    //TODO: callee will visit visitVarExpr function tthat returns literalExpr
+    //visitVarExpr should be changed to return void* so we can utilize it here
+    //this would mean that we would need to think alot of the hasmap stuff
+    //other option is that we add LITERAL_FUNCTION to LiteralType enum
+    //and then cast LITERAL_FUNTIONS as FunctStmt*. it is not pretty and may not work
+    //so lets just rework the visitVarExpr
+    LiteralExpr* callee = evaluate(cExpr->callee);
+    //TODO: result type?
+    FunctionStmt* callable = NULL;
+    void* result = NULL;
+    if(callee == NULL){
+        printf("callee is null\n");
+        //TODO: runtime error function / class not defined
+    }
+
+    if(callee->type != LITERAL_FUNCTION && callee->type != LITERAL_OBJECT){
+        //TODO: runtime error
+    }
+
+    if(callee->type == LITERAL_FUNCTION){
+        callable = (FunctionStmt*)callee->value;
+    }
+    
+    LiteralExpr** arguments = NULL;
+    for(int i = 0; i < cExpr->argLen; i++){
+        arguments = realloc(arguments, sizeof(LiteralExpr) * (i + 1));
+        arguments[i] = evaluate(cExpr->arguments[i]);
+    }
+
+    functionCall(callable, arguments);
+    //result = call->call(arguments, cExpr->argLen, call->declaration, call->closure);
+    return result;
+}
+
+
 static void* visitExpressionStmt(Stmt* stmt){
     ExprStmt* eStmt = (ExprStmt*) stmt->stmt;
     LiteralExpr* lExpr = (LiteralExpr*)evaluate(eStmt->expr);
+    if(lExpr == NULL){
+        printf("EXPRESSSION = NULL\n");
+    }
     return lExpr;
 }
 
@@ -355,6 +454,18 @@ static void* visitWhileStmt(Stmt* stmt){
     return NULL;
 }
 
+
+static void* visitFunctionStmt(Stmt* stmt){
+    //TODO: save function statment to hasmap so you can
+    //reference it with callExpr
+    FunctionStmt* fStmt = (FunctionStmt*)stmt->stmt;
+    // Values must be saved to dict as LiteralExpr*
+    LiteralExpr* lExpr = malloc(sizeof(LiteralExpr));
+    lExpr->type = LITERAL_FUNCTION;
+    lExpr->value = fStmt;
+    dictAdd(&currentEnv->variables, fStmt->name.lexeme, lExpr);
+    return NULL;
+}
 
 static void execute(Stmt* stmt){
     acceptStmt(EvalStatmentVisitor, stmt);

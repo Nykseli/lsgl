@@ -3,6 +3,7 @@ print "moro" + "poro";
 var moro =  5 + 6;
 moro = "moro";
 var poro = "poro";
+poro = poro + "hei";
 print moro + poro;
 
 var a = "global a";
@@ -16,7 +17,7 @@ var c = "global c";
     print a;
     print b;
     print c;
-    print "moi"+"heäi";
+    print "moi"+"heäi"; 
   }
   print a;
   print b;
@@ -27,14 +28,14 @@ print a;
 print b;
 print c;
 
-print null or "heps";
+//print null or "heps"; ""
 print 2 or "hei";
 
 if ("torppa" == "torppa") print "moi";
 else print "hei";
 
 var i = 0;
-while (i < 5) {
+while (i < 5) { 
   i = i + 1;
   print i;
 

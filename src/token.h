@@ -83,7 +83,7 @@ Tokenizer tokenizer(CodeInfo* fi);
 #define CLASS_KEY "class"
 #define ELSE_KEY "else"
 #define FALSE_KEY "false"
-#define FUN_KEY "fun"
+#define FUN_KEY "function"
 #define FOR_KEY "for"
 #define IF_KEY "if"
 #define NULL_KEY "null"

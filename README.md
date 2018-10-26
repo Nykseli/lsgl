@@ -12,6 +12,7 @@ Bugs folder has info on know lsgl bugs
 - [ ] multiline bugfix
 - [ ] if / else block statmets
 - [ ] break from loops
+- [ ] const variables
 - [ ] error handling, undefined variables etc.
 
 ### TODO misc:

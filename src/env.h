@@ -13,4 +13,24 @@ typedef struct exce_env {
     struct exce_env* enclosing;
 } ExcecutionEnv;
 
+// typedef void* (*FuncCall)(LiteralExpr** args, int argLen, void* declaration, ExcecutionEnv* env);
+
+// typedef struct callable {
+//     unsigned int arity;
+//     FuncCall call;
+//     void* declaration;
+//     ExcecutionEnv* closure;
+// } Callable;
+
+// //TODO: CALLEE_OBJECT
+// typedef enum calleetype {
+//     CALLEE_FUNC,
+//     CALLEE_OBJ,
+// } CalleeType;
+
+// typedef struct callee {
+//     CalleeType type;
+//     void* callee; 
+// }Callee;
+
 #endif

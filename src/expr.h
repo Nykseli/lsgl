@@ -21,7 +21,13 @@ typedef enum literal_expr_type {
     LITERAL_NULL,
     LITERAL_BOOL,
     LITERAL_NUMBER,
-    LITERAL_STRING
+    LITERAL_STRING,
+
+    // Variables are saved to hasmap as Literals so function and obect are
+    // consired as literals as well. This also makes it so we can print
+    // the functions with print
+    LITERAL_FUNCTION,
+    LITERAL_OBJECT,
 } LiteralType;
 
 
@@ -37,6 +43,13 @@ typedef struct binary {
     Expr* left;
     Expr* right;
 } BinaryExpr;
+
+typedef struct call {
+    Token paren;
+    Expr* callee;
+    Expr** arguments;
+    int argLen;
+} CallExpr;
 
 typedef struct grouping {
     Expr* expr;
@@ -76,6 +89,7 @@ typedef enum stmt_type {
     STMT_BLOCK,
     STMT_IF,
     STMT_WHILE,
+    STMT_FUNCTION
 } StmtType;
 
 typedef struct stmt {
@@ -117,5 +131,12 @@ typedef struct stmt_while {
     Expr* condition;
     Stmt* body;
 } WhileStmt;
+
+typedef struct stmt_function {
+    Token name;
+    BlockStmt* body;
+    Token* params;
+    int paramLen;
+} FunctionStmt;
 
 #endif

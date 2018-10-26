@@ -10,12 +10,15 @@
 
 static BinaryExpr* newBinary(Token op, Expr* left, Expr* right);
 static LogicalExpr* newLogical(Token op, Expr* left, Expr* right);
+static CallExpr* newCall(Token paren, Expr* callee, Expr** arguments, int argLen);
 static Expr* newExpr(ExpressionType type, void* rExpr);
 static Expr* equality(ParsedTokens* PT);
 static Expr* comparison(ParsedTokens* PT);
 static Expr* addition(ParsedTokens* PT);
 static Expr* multiplication(ParsedTokens* PT);
 static Expr* unary(ParsedTokens* PT);
+static Expr* finnishCall(ParsedTokens* PT, Expr* expr);
+static Expr* call(ParsedTokens* PT);
 static Expr* primary(ParsedTokens* PT);
 static Expr* grouping(ParsedTokens* PT);
 static Expr* expression(ParsedTokens* PT);
@@ -27,6 +30,7 @@ static Token previous(ParsedTokens* PT);
 
 static Stmt* newStatement(StmtType type, void* stmt);
 static Stmt* expressionStatement(ParsedTokens* PT);
+static Stmt* functionStatment(ParsedTokens* PT);
 static Stmt* printStatement(ParsedTokens* PT);
 static Stmt* varStatement(Expr* initializer, Token name);
 static Stmt* statement(ParsedTokens* PT);
@@ -112,6 +116,17 @@ LiteralExpr* newLiteral(LiteralType type, void* value){
 
     return lExpr;
 }
+
+CallExpr* newCall(Token paren, Expr* callee, Expr** arguments, int argLen){
+    CallExpr* cExpr = malloc(sizeof(CallExpr));
+    cExpr->paren = paren;
+    cExpr->callee = callee;
+    cExpr->arguments = arguments;
+    cExpr->argLen = argLen;
+
+    return cExpr;
+}
+
 
 GroupingExpr* newGrouping(Expr* expr){
     GroupingExpr* gExpr = malloc(sizeof(GroupingExpr));
@@ -238,7 +253,46 @@ Expr* unary(ParsedTokens* PT){
         return newExpr(EXPR_UNARY, newUnary(operator, right));
     }
 
-    return primary(PT);
+    return call(PT);
+}
+
+Expr* finnishCall(ParsedTokens* PT, Expr* callee){
+    Expr** arguments = NULL;
+    int argLen = 0;
+    TokenType types[] = {COMMA};
+    if(!MATCH(PT->tokens[PT->current].type, RIGHT_PAREN)){
+        do {
+            //TODO: I think we need more than 16 arguments but this will suffice for now
+            if(argLen >= 16){
+                error(PT, "Cannot have more than 16 arguments.");
+            }
+            arguments = realloc(arguments, sizeof(Expr) * argLen + 1);
+            arguments[argLen] = expression(PT);
+            argLen++;
+            
+        }while(match(PT, PT->tokens[PT->current].type, types, 1));
+    }
+
+    Token paren = consume(PT, RIGHT_PAREN, "Expect ')' after arguments.");
+
+    return newExpr(EXPR_CALL, newCall(paren, callee, arguments, argLen));
+}
+
+Expr* call(ParsedTokens* PT){
+    Expr* expr = primary(PT);
+
+    //TODO: while loop makes this this wierd function call possible
+    // foo()()() and i dont know if i want that
+    while(1){
+        if(MATCH(PT->tokens[PT->current].type, LEFT_PAREN)){
+            PT->current++;
+            expr = finnishCall(PT, expr);
+        }else{
+            return expr;
+        }
+    }
+
+    return expr;
 }
 
 Expr* primary(ParsedTokens* PT){
@@ -352,6 +406,40 @@ Stmt* expressionStatement(ParsedTokens* PT){
     stmt->stmt = eStmt;
     consume(PT, SEMICOLON, "Expect ';' after value.");
     return stmt;
+}
+
+static Stmt* functionStatment(ParsedTokens* PT){
+    Token name = consume(PT, IDENTIFIER, "Except function name");
+    FunctionStmt* fStmt = malloc(sizeof(FunctionStmt));
+    Token* params = NULL;
+    Stmt* body = NULL;
+    TokenType types[] = {COMMA};
+    int paramLen = 0;
+
+    consume(PT, LEFT_PAREN, "Expect '(' after function name.");
+    if(!MATCH(PT->tokens[PT->current].type, RIGHT_PAREN)){
+        do {
+            if(paramLen >= 16){
+                error(PT, "Cannot have more than 16 arguments");
+            }
+            params = realloc(params, sizeof(Token) * (paramLen + 1));
+            params[paramLen] = consume(PT, IDENTIFIER, "Expect parameter name");
+            paramLen++;
+        }while(match(PT, PT->tokens[PT->current].type, types, 1));
+
+    }
+
+    consume(PT, RIGHT_PAREN, "Expect ')' after parameters.");
+    consume(PT, LEFT_BRACE, "Expect '{' before funcion body.");
+
+    body = blockStatment(PT);
+
+    fStmt->body = (BlockStmt*)body->stmt;
+    fStmt->params = params;
+    fStmt->name = name;
+    fStmt->paramLen = paramLen;
+
+    return newStatement(STMT_FUNCTION, fStmt);
 }
 
 Stmt* varStatement(Expr* initializer, Token name){
@@ -540,6 +628,11 @@ Stmt* varDeclaration(ParsedTokens* PT) {
 
 Stmt* declaration(ParsedTokens* PT) {
     Token token = PT->tokens[PT->current];
+    if(MATCH(token.type, FUN)){
+        PT->current++;
+
+        return functionStatment(PT); 
+    }
     if(MATCH(token.type, VAR)){
         PT->current++;
         return varDeclaration(PT);

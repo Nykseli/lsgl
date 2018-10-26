@@ -16,6 +16,8 @@ void* acceptExpr(ExpressionVisitor visitor, Expr* expr){
             return visitor.visitAssign(expr->expr);
         case EXPR_LOGICAL:
             return visitor.visitLogical(expr->expr);
+        case EXPR_CALL:
+            return visitor.visitCall(expr->expr);
     }
 }
 
@@ -33,5 +35,7 @@ void* acceptStmt(StatementVisitor visitor, Stmt* stmt){
             return visitor.visitIf(stmt);
         case STMT_WHILE:
             return visitor.visitWhile(stmt);
+        case STMT_FUNCTION:
+            return visitor.visitFunction(stmt);
     }
 }
