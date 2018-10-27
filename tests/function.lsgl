@@ -1,0 +1,18 @@
+function fibonacci(n) {
+  if (n <= 1) return n;
+  return fibonacci(n - 2) + fibonacci(n - 1);
+}
+
+for (var i = 0; i < 20; i = i + 1) {
+  print fibonacci(i);
+}
+
+
+function len(lol){
+    if(lol < 2) print lol;
+    
+    return "moro";
+}
+
+
+print len(1);

@@ -27,7 +27,8 @@ static void* visitBlockStmt(Stmt* stmt);
 static void* visitIfStmt(Stmt* stmt);
 static void* visitWhileStmt(Stmt* stmt);
 static void* visitFunctionStmt(Stmt* stmt);
-static void execute(Stmt* stmt);
+static void* visitReturnStmt(Stmt* stmt);
+static void* execute(Stmt* stmt);
 
 static void* evaluate(Expr* expr);
 
@@ -60,6 +61,7 @@ StatementVisitor EvalStatmentVisitor = {
     .visitIf = visitIfStmt,
     .visitWhile = visitWhileStmt,
     .visitFunction = visitFunctionStmt,
+    .visitReturn = visitReturnStmt,
 };
 
 /**
@@ -67,7 +69,7 @@ StatementVisitor EvalStatmentVisitor = {
 * This "executes" the definied function 
 */
 //static void* functionCall(Token paren, Callee callee, Expr** args, int argLen){
-static void* functionCall(FunctionStmt* fStmt, LiteralExpr** arguments){
+static void* functionCall(Token* params, BlockStmt* body, int paramLen, LiteralExpr** arguments){
     //TODO: i need stmt block that basicly contains the function
     // i also need values of the argumens so i can assing then to the block scope
     // after the arguments are assigned to block scope, i just run the scope
@@ -85,19 +87,22 @@ BlockStmt* bStmt = (BlockStmt*)stmt->stmt;
     currentEnv = prev;
     */
 
-   BlockStmt* bStmt = fStmt->body;
+   BlockStmt* bStmt = body;
    ExcecutionEnv* prev = currentEnv, *env = newEnv();
    env->enclosing = prev;
    currentEnv = env;
-   for(int i = 0; i < fStmt->paramLen; i++){
-       dictAdd(&currentEnv->variables, fStmt->params[i].lexeme, arguments[i]);
+   LiteralExpr* returnValue = NULL;
+   for(int i = 0; i < paramLen; i++){
+       dictAdd(&currentEnv->variables, params[i].lexeme, arguments[i]);
    }
 
    for(int i = 0; i< bStmt->stmtLen; i++){
-        execute(bStmt->statements[i]);
+        returnValue = execute(bStmt->statements[i]);
+        if(returnValue != NULL) break;
     }
 
     currentEnv = prev;
+    if(returnValue != NULL) return returnValue;
 
     return NULL;
 }
@@ -350,7 +355,7 @@ static void* visitCallExpr(void* expr){
     LiteralExpr* callee = evaluate(cExpr->callee);
     //TODO: result type?
     FunctionStmt* callable = NULL;
-    void* result = NULL;
+    LiteralExpr* result = NULL;
     if(callee == NULL){
         printf("callee is null\n");
         //TODO: runtime error function / class not defined
@@ -370,7 +375,7 @@ static void* visitCallExpr(void* expr){
         arguments[i] = evaluate(cExpr->arguments[i]);
     }
 
-    functionCall(callable, arguments);
+    result = callable->call(callable->params, callable->body, callable->paramLen, arguments);
     //result = call->call(arguments, cExpr->argLen, call->declaration, call->closure);
     return result;
 }
@@ -380,6 +385,7 @@ static void* visitExpressionStmt(Stmt* stmt){
     ExprStmt* eStmt = (ExprStmt*) stmt->stmt;
     LiteralExpr* lExpr = (LiteralExpr*)evaluate(eStmt->expr);
     if(lExpr == NULL){
+       //TODO: functions returns null so lExpr is null when function is called
         printf("EXPRESSSION = NULL\n");
     }
     return lExpr;
@@ -400,6 +406,7 @@ static void* visitPrintStmt(Stmt* stmt){
     }else if(lExpr->type == LITERAL_BOOL){
         printf("%s\n", (char*) lExpr->value);
     }
+    return NULL;
 }
 
 static void* visitVarStmt(Stmt* stmt){
@@ -433,13 +440,16 @@ static void* visitBlockStmt(Stmt* stmt){
 static void* visitIfStmt(Stmt* stmt){
     IfStmt* iStmt = (IfStmt*)stmt->stmt;
     LiteralExpr* lExpr = (LiteralExpr*) evaluate(iStmt->condition);
+    LiteralExpr* result = NULL;
     //if(strcmp(isNonTruthy(lExpr), (char*)TRUE_KEY) == 0){
     if(isTrue(lExpr)){
-        execute(iStmt->thenBranch);
+        result = malloc(sizeof(LiteralExpr));
+        result = execute(iStmt->thenBranch);
     }else if(iStmt->elseBranch != NULL){
+        result = malloc(sizeof(LiteralExpr));
         execute(iStmt->elseBranch);
     }
-    return NULL;
+    return result;
 }
 
 static void* visitWhileStmt(Stmt* stmt){
@@ -459,6 +469,7 @@ static void* visitFunctionStmt(Stmt* stmt){
     //TODO: save function statment to hasmap so you can
     //reference it with callExpr
     FunctionStmt* fStmt = (FunctionStmt*)stmt->stmt;
+    fStmt->call = functionCall;
     // Values must be saved to dict as LiteralExpr*
     LiteralExpr* lExpr = malloc(sizeof(LiteralExpr));
     lExpr->type = LITERAL_FUNCTION;
@@ -467,7 +478,19 @@ static void* visitFunctionStmt(Stmt* stmt){
     return NULL;
 }
 
-static void execute(Stmt* stmt){
+static void* visitReturnStmt(Stmt* stmt){
+    ReturnStmt* rStmt = (ReturnStmt*) stmt->stmt;
+    LiteralExpr* value = NULL;
+
+    if(rStmt->value != NULL){
+        value = evaluate(rStmt->value);
+    }
+
+    return value;
+
+}
+
+static void* execute(Stmt* stmt){
     acceptStmt(EvalStatmentVisitor, stmt);
 }
 

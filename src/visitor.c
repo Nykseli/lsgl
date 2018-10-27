@@ -37,5 +37,7 @@ void* acceptStmt(StatementVisitor visitor, Stmt* stmt){
             return visitor.visitWhile(stmt);
         case STMT_FUNCTION:
             return visitor.visitFunction(stmt);
+        case STMT_RETURN:
+            return visitor.visitReturn(stmt);
     }
 }

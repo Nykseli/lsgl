@@ -27,6 +27,7 @@ typedef struct stmt_visitor {
     ActionStmt visitIf;
     ActionStmt visitWhile;
     ActionStmt visitFunction;
+    ActionStmt visitReturn;
 } StatementVisitor;
 
 void* acceptStmt(StatementVisitor visitor, Stmt* stmt);

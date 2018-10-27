@@ -40,6 +40,7 @@ static Stmt* blockStatment(ParsedTokens* PT);
 static Stmt* ifStatment(ParsedTokens* PT);
 static Stmt* whileStatment(ParsedTokens* PT);
 static Stmt* forStatment(ParsedTokens* PT);
+static Stmt* returnStatment(ParsedTokens* PT);
 
 static void error(ParsedTokens* PT, const char* msg);
 static Token consume(ParsedTokens* PT, TokenType type, const char* msg);
@@ -514,6 +515,27 @@ Stmt* whileStatment(ParsedTokens* PT){
     return stmt;
 }
 
+static Stmt* returnStatment(ParsedTokens* PT){
+    Stmt* stmt = malloc(sizeof(Stmt));
+    ReturnStmt* rStmt = malloc(sizeof(rStmt));
+    Token keyword = previous(PT);
+    Expr* value = NULL;
+
+    if(!MATCH(PT->tokens[PT->current].type, SEMICOLON)){
+        value = realloc(value, sizeof(Expr));
+        value = expression(PT);
+    }
+
+    consume(PT, SEMICOLON, "Expect ';' after return value.");
+    rStmt->value = value;
+    rStmt->keyword = keyword;
+    
+    stmt->type = STMT_RETURN;
+    stmt->stmt = rStmt;
+
+    return stmt;
+}
+
 static Stmt* forStatment(ParsedTokens* PT){
     Stmt* body = NULL;
     Stmt* initializer = NULL;
@@ -607,6 +629,10 @@ Stmt* statement(ParsedTokens* PT) {
     if(MATCH(token.type, LEFT_BRACE)){
         PT->current++;
         return blockStatment(PT);
+    }
+    if(MATCH(token.type, RETURN)){
+        PT->current++;
+        return returnStatment(PT);
     }
 
     return expressionStatement(PT);

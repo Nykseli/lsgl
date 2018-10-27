@@ -89,7 +89,8 @@ typedef enum stmt_type {
     STMT_BLOCK,
     STMT_IF,
     STMT_WHILE,
-    STMT_FUNCTION
+    STMT_FUNCTION,
+    STMT_RETURN,
 } StmtType;
 
 typedef struct stmt {
@@ -132,8 +133,16 @@ typedef struct stmt_while {
     Stmt* body;
 } WhileStmt;
 
+typedef struct stmt_return {
+    Token keyword;
+    Expr* value;
+} ReturnStmt;
+
+typedef void* (*CallFunction)( Token* params, BlockStmt* body, int paramLen, LiteralExpr** arguments);
+
 typedef struct stmt_function {
     Token name;
+    CallFunction call;
     BlockStmt* body;
     Token* params;
     int paramLen;
