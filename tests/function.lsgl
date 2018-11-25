@@ -16,3 +16,7 @@ function len(lol){
 
 
 print len(1);
+
+
+var polo = len;
+print polo(3);
